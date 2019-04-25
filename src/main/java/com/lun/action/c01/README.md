@@ -193,5 +193,39 @@ Gustafson定律也试图说明处理器个数、串行比例和加速比之间�
 
 ### Amdahl定律和Gustafson定律是否相互矛盾 ###
 
+Amdahl定律强调：当串行比例一定时，加速比是有上限的，不管你堆叠多少个CPU参与计算，都不能突破这个上限。
 
+Gustafson定律关心的是：如果可被并行化的代码所占比重足够多，那么加速比就能随着CPU的数量线性增长。
+
+
+## 回到Java：Java Memory Model ##
+
+JMM关键技术点都是围绕多线程的原子性、可见性和有序性。
+
+### 原子性Atomicity ###
+
+指一个操作是不可中断的。即使是在多个线程一起执行的时候，一个操作一旦开始，就不会被其他线程干扰。
+
+[MultiThreadLong](MultiThreadLong.java)
+
+### 可见性Visibility ###
+
+指当一个线程修改了某个一个共享变量的值，其他线程是否能够立即知道这个修改。
+
+### 有序性Ordering ###
+
+为了流水线有较大吞吐量，指令重排。
+
+但重排后，程序运行结果可能会出意外。
+
+### Happen-Before规则 ###
+
+- 程序顺序规则：一个线程中的每个操作，happens-before于该线程中的任意后续操作。
+- 监视器锁规则：对一个锁的解锁，happens-before于随后对这个锁的加锁。
+- volatile变量规则：对一个volatile域的写，happens-before于任意后续对这个volatile域的读。
+- 传递性：如果A happens-before B，且B happens-before C，那么A happens-before C。
+- start()规则：如果线程A执行操作ThreadB.start()（启动线程B），那么A线程的ThreadB.start()操作happens-before于线程B中的任意操作。
+- join()规则：如果线程A执行操作ThreadB.join()并成功返回，那么线程B中的任意操作happens-before于线程A从ThreadB.join()操作成功返回。
+- 程序中断规则：对线程interrupted()方法的调用先行于被中断线程的代码检测到中断时间的发生。
+- 对象finalize规则：一个对象的初始化完成（构造函数执行结束）先行于发生它的finalize()方法的开始。
 
