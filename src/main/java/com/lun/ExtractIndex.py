@@ -4,7 +4,7 @@
 
 import re
 
-chapterName = 'c16'
+chapterName = 'C:\eclipse-workspace\JavaConcurrency\src\main\java\com\lun\\action\c02'
 
 fileName = chapterName + '\README.md'
 

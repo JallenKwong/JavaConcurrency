@@ -1,5 +1,45 @@
 # Java并行程序基础 #
 
+[1.线程需知](#线程需知)
+
+[2.初始线程：线程的基本操作](#初始线程线程的基本操作)
+
+[2.1.新建线程](#新建线程)
+
+[2.2.终止线程](#终止线程)
+
+[2.2.1.被遗弃的stop()的自白](#被遗弃的stop的自白)
+
+[2.2.2.标志终止](#标志终止)
+
+[2.3.线程中断](#线程中断)
+
+[2.4.等待wait和通知notify](#等待wait和通知notify)
+
+[2.5.挂起suspend和继续执行resume线程](#挂起suspend和继续执行resume线程)
+
+[2.6.等待线程结束join和谦让yield](#等待线程结束join和谦让yield)
+
+[3.volatile与Java内存模型JMM](#volatile与java内存模型jmm)
+
+[4.分门别类的管理：线程组](#分门别类的管理线程组)
+
+[5.驻守后台：守护线程(Daemon)](#驻守后台守护线程daemon)
+
+[6.先干重要的事：线程优先级](#先干重要的事线程优先级)
+
+[7.线程安全的概念与synchronized](#线程安全的概念与synchronized)
+
+[8.程序中的幽灵：隐蔽的错误](#程序中的幽灵隐蔽的错误)
+
+[8.1.无提示的错误案例](#无提示的错误案例)
+
+[8.2.并发下的ArrayList](#并发下的arraylist)
+
+[8.3.并发下的HashMap](#并发下的hashmap)
+
+[8.4.初学者常见问题：错误加锁](#初学者常见问题错误加锁)
+
 ## 线程需知 ##
 
 进程是由 **程序代码**和**其相关联的数据集**（内有：标识符、状态、优先级等） 两个基本原素组成的实体。假设处理器开始执行这个程序代码，这个执行实体称为进程。
@@ -182,26 +222,124 @@ Thread.yield()的调用就好像在说：我已经完成一些最重要的工作
 
 ## volatile与Java内存模型JMM ##
 
+>volatile/ˈvɒlətaɪl/ adj. 易变的;无定性的;
+
+当你用volatile去申明一个变量时，就等于告诉了虚拟机，这个变量极有可能会被某些或者线程修改。为了确保这个变量被修改后，应用程序范围内的所有线程都能够“看到”改动，虚拟机就必须采用一些特殊的手段，保证这个变量的可见性等特点。
+
+比如，根据编译器的优化规则，如果不使用volatile声明变量，那么这个变量被修改后，其他线程可能并不会被通知到，甚至在别的线程中，看到变量的修改顺序都会是反的。一旦使用volatile，虚拟机就会特别小心地处理这种情况。
+
+volatile对保证数据的原子性、可见性和有序性都有很大帮助，但是它不能代替锁。
+
+[volatile不能代替锁](VolatileThread.java)
+
+[可见性问题](NoVisibility.java)
+
+## 分门别类的管理：线程组 ##
+
+物以类聚好管理
+
+[ThreadGroupName](ThreadGroupName.java)
+
+## 驻守后台：守护线程(Daemon) ##
+
+守护线程是一种特殊的线程，在后台默默地完成一些系统性的服务，譬如：垃圾回收线程、JIT线程就可以理解为守护线程。与之相对应的是用户线程，用户线程可以认为是系统的工作线程，它会完成这个程序应该要完成的业务操作。
+
+如果用户线程全部结束，这也意味着这个程序实际上无事可做了。守护线程要守护的对象已经不存在了，那么整个应用程序就应该结束。
+
+因此，当一个Java应用内，只有守护线程时，Java虚拟机就会自然退出。
+
+[DeamonDemo](DeamonDemo.java)
+
+## 先干重要的事：线程优先级 ##
+
+可能产生**饥饿**问题
+
+[PriorityDemo](PriorityDemo.java)
+
+## 线程安全的概念与synchronized ##
+
+若程序A在单线程环境运行结果 与 并行化后的程序A在多线程环境运行结果 一致，那就是**线程安全**。
+
+[线程不安全例程——两线程对i进行累加操作](AccountingVol.java)
+
+![](image/04.png)
+
+---
+
+**解决方法**：`synchronized`
+
+关键字`synchronized`的作用是实现线程间的同步。它的工作是对同步的代码加锁，使得每一次，**只能有一个线程进入同步块**，从而保证线程安全。
+
+关键字`synchronized`的用法
+
+- 指定加锁对象：对给定对象加锁，进入同步代码前要获得给定对象的锁。
+- 直接作用于实例方法：相当于对当前实例加锁，进入同步代码前要获得当前实例的锁。
+- 直接作用于静态方法：相当于对类加锁，进入同步代码前要获得当前类的锁。
+
+[synchronized的使用解决线程冲突](AccountingSync.java)
+
+synchronized的用法
+
+    public synchronized void increase(){
+		//code
+    }
+
+or
+
+    synchronized(object){
+        //code
+    }
+
+[错误使用synchronized的例程](AccountingSyncBad.java)使用实例锁，应该使用类锁
+
+## 程序中的幽灵：隐蔽的错误 ##
 
 
+### 无提示的错误案例 ###
 
+[Overflow](Overflow.java)
 
+    int v1 = 1073741827;
+    int v2 = 1431655768;
 
+    System.out.println("V1="+v1);
+    System.out.println("V2="+v2);
 
+    int ave = (v1+v2)/2;
+    System.out.println("ave="+ave);//结果输出是负数，溢出问题
 
+    //解决方法：利用乘法分配律进行修改
+    System.out.println("ave2=" + (v1 / 2 + v2 / 2));
 
+### 并发下的ArrayList ###
 
+ArrayList是一个线程不安全的容器。
 
+[ArrayListMultiThread](ArrayListMultiThread.java)
 
+解决之道
 
+- 使用类锁
+- 使用Collections.synchronizedCollection方法加工ArrayList
+- 使用Vector
 
+### 并发下的HashMap ###
 
+HashMap是一个线程不安全的容器。
 
+[HashMapMultiThread](HashMapMultiThread.java)
 
+解决之道
 
+- 使用类锁
+- 使用Collections.synchronizedMap方法加工HashMap
+- 使用ConcurrentHashMap
 
+Java8前，多线程冲突，可能造成HashMap内部链表成环的情况，造成死循环遍历。Java8中该问题已经不存在。
 
+![](image/05.png)
 
+### 初学者常见问题：错误加锁 ###
 
-
+[BadBlockOnInteger](BadBlockOnInteger.java)
 
