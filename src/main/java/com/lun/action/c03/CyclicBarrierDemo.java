@@ -1,0 +1,102 @@
+package com.lun.action.c03;
+
+import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+
+public class CyclicBarrierDemo {
+    public static class Soldier implements Runnable {
+        private String soldier;
+        private final CyclicBarrier cyclicBarrier;
+
+        public Soldier(CyclicBarrier cyclicBarrier, String soldier) {
+            this.soldier = soldier;
+            this.cyclicBarrier = cyclicBarrier;
+        }
+
+        @Override
+        public void run() {
+            try {
+                cyclicBarrier.await();//<------------------第一次集结
+                doWork();
+                cyclicBarrier.await();//<------------------第二次集结
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (BrokenBarrierException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        void doWork() {
+            try {
+                Thread.sleep(Math.abs(new Random().nextInt() % 10000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(soldier + ":任务完成");
+        }
+    }
+
+    public static class BarrierRun implements Runnable {
+
+        boolean flag;
+        int N;
+
+        public BarrierRun(boolean flag, int N) {
+            this.flag = flag;
+            this.N = N;
+        }
+
+        @Override
+        public void run() {
+            if (flag) {
+                System.out.println("排长:[士兵" + N + "个,任务完成!");
+            } else {
+                System.out.println("排长:[士兵" + N + "个,集合完毕!");
+                flag = true;      
+            }
+        }
+    }
+
+
+    public static void main(String args[]) {
+        final int N = 10;
+        Thread[] allSoldier = new Thread[N];
+        boolean flag = false;
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(N, new BarrierRun(flag, N));
+        System.out.println("集合队伍!");
+        for (int i = 0; i < N; i++) {
+            System.out.println("士兵" + i + "报道!");
+            allSoldier[i] = new Thread(new Soldier(cyclicBarrier, "士兵" + i));
+            allSoldier[i].start();
+        }
+    }
+}
+
+/*
+集合队伍!
+士兵0报道!
+士兵1报道!
+士兵2报道!
+士兵3报道!
+士兵4报道!
+士兵5报道!
+士兵6报道!
+士兵7报道!
+士兵8报道!
+士兵9报道!
+排长:[士兵10个,集合完毕!
+士兵0:任务完成
+士兵8:任务完成
+士兵1:任务完成
+士兵5:任务完成
+士兵7:任务完成
+士兵6:任务完成
+士兵9:任务完成
+士兵2:任务完成
+士兵3:任务完成
+士兵4:任务完成
+排长:[士兵10个,任务完成!
+*/
+

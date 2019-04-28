@@ -176,3 +176,72 @@ Condition与wait()和notify()方法的作用是大致相同。
 ### 允许多个线程同时访问：信号量（Semaphore） ###
 
 >semaphore/ˈseməfɔːr/ || /send 么 for/ n.信号标;旗语 v.打旗语;(用其他类似的信号系统)发信号
+
+广义上说，信号量是对锁的扩展。无论是内部锁synchronized还是重入锁ReentrantLock，一次都只允许一个线程访问一个资源，而信号量却可以指定多个线程，同时访问某一个资源。
+
+[SemapDemo](SemapDemo.java)
+
+### ReadWriteLock读写锁 ###
+
+ReadWriteLock是JDK5提供的读写分离锁。读写分离锁可以有效地帮助减少锁竞争，以提升系统性能。
+
+读写锁允许多个线程同时**读**。
+
+读写锁的访问约束情况
+
+-|读|写
+---|---|---
+读|非阻塞|阻塞
+写|阻塞|阻塞
+
+[ReadWriteLockDemo](ReadWriteLockDemo.java)
+
+上述程序体现了ReadWriteLock在多读少写情况下的优越性。
+
+若使用普通的重入锁代替 读写锁。那么所有的读和写线程之间都必须相互等待，因此这个程序的执行时间将长达20秒。
+
+### 倒计时器：CountDownLatch ###
+
+>latch/lætʃ/ n.门闩;插销;碰锁;弹簧锁 v.用插销插上;用碰锁锁上
+
+CountDownLatch的含义是，把门锁起来，不让里面的线程跑出来。因此，这个工具通常用来控制线程等待，它可以让某一线程等待直到倒计时结束，再开始执行。
+
+对于倒计时器，一种典型的场景就是火箭发射。在火箭发射前，为了保证万无一失，往往还要进行各项设备、仪器的检查。只有等所有的检查完毕后，引擎才能点火。这种场景就非常适合使用CountdOWNlATCH。它可以使得**点火线程**等待所有检查线程全部完工后，再执行。
+
+[CountDownLatchDemo](CountDownLatchDemo.java)
+
+![](image/01.png)
+
+### 循环栅栏：CyclicBarrier ###
+
+和CountDownLatch非常类似，它也可以实现线程间的计数等待。这里栅栏
+
+CyclicBarrier可以理解为**循环栅栏**。**栅栏**就是用来阻止线程继续执行，要求线程在栅栏处等待。**循环**是指这个计数器可以反复使用。
+
+使用场景：排长下达命令，要求10个士兵一起去完成一项任务。这时，就会要求10个士兵先集合报道，接着去执行任务。当10个士兵把自己手头的任务都执行完成。排长就宣布：“活干完了，去吃饭啰”。
+
+[CyclicBarrierDemo](CyclicBarrierDemo.java)
+
+![](image/02.png)
+
+cyclicBarrier.await()可能会抛出两个异常InterruptedException, BrokenBarrierException
+
+### 线程阻塞工具类：LockSupport ###
+
+它可在线程内任意位置让线程阻塞。和Thread.suspend()相比，它弥补了由于resume()在前发生，导致线程无法继续执行的情况。和Object.wait()相比，它不需先获得某个对象的锁，也不会抛出InterruptedException。
+
+LockSupport的静态方法park()可以阻塞当前线程，类似的还有parkNanos()，parkUntil()等方法。它们实现了一个限时的等待。
+
+[suspend()永久卡死线程换成LockSupport——LockSupportDemo](LockSupportDemo.java)
+
+因为LockSupport类使用类似信号量的机制。它为每一个线程准备了一个许可，若许可可用，那么park()函数会立即返回，并且消费这个许可（也就是将许可变为不可用），如果许可不可用，就会阻塞。而unpack()则使得一个许可变为可用（但是和信号量不同的是，**许可不能累加**，你不可能拥有超过一个许可，它永远只有一个）。
+
+这个特点使得：即使unpark()操作发生在park()之前，它也可以使下一次park()操作立即返回。上述代码可顺利结束的主要原因。
+
+---
+
+除了有定时阻塞的功能外，LockSupport.park()还能支持中断影响。但是和其他接受中断的函数很不一样，LockSupport.park()不会抛出InterruptException。**它只是会默默地返回**，但是可以从Thread.interrupted()等获得中断标记。
+
+[LockSupportIntDemo](LockSupportIntDemo.java)
+
+## 线程复用：线程池 ##
