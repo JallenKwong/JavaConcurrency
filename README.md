@@ -14,4 +14,4 @@
 
 [7.](src/main/java/com/lun/action/c07)
 
-[8.](src/main/java/com/lun/action/c08)
+[8.并行程序调试](src/main/java/com/lun/action/c08)
