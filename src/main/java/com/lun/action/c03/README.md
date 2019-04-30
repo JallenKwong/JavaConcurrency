@@ -245,3 +245,68 @@ LockSupport的静态方法park()可以阻塞当前线程，类似的还有parkNa
 [LockSupportIntDemo](LockSupportIntDemo.java)
 
 ## 线程复用：线程池 ##
+
+为了避免系统频繁地创建和销毁线程造成的性能损耗，可让创建的线程进行复用。
+
+### 不要重复发明轮子：JDK对线程池的支持 ###
+
+![](image/03.png)
+
+五种常用的静态工厂方法
+
+- newFixedThreadPool()
+- newSingleThreadExecutor()
+- newCachedThreadPool()
+- newSingleThreadScheduledExecutor()
+- newScheduledThreadPool()
+
+#### 固定大小的线程池 ####
+
+[ThreadPoolDemo](ThreadPoolDemo.java)
+
+#### 计划任务 ####
+
+    public ScheduledFuture<?> schedule(Runnable command,
+                                       long delay, TimeUnit unit);
+
+    public ScheduledFuture<?> scheduleAtFixedRate(Runnable command,
+                                                  long initialDelay,
+                                                  long period,
+                                                  TimeUnit unit);
+
+    public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
+                                                     long initialDelay,
+                                                     long delay,
+                                                     TimeUnit unit);
+
+**schedule方法**
+
+Creates and executes a one-shot action that becomes enabled after the given delay.
+
+---
+
+**scheduleAtFixedRate方法**
+
+Creates and executes a periodic action that becomes enabled first after **the given initial delay**, and subsequently with **the given period**; that is executions will commence开始发生 after **initialDelay** then initialDelay+period, then initialDelay + 2 * period, and so on. 
+
+If any execution of the task encounters an exception, subsequent executions are suppressed. 
+
+Otherwise, the task will only terminate via cancellation or termination of the executor. 
+
+If any execution of this task takes **longer than** its period, then subsequent executions may start late, but will not concurrently execute.
+
+
+---
+
+**scheduleWithFixedDelay方法**
+
+Creates and executes a periodic action that becomes enabled first after **the given initial delay**, and subsequently with **the given delay** between the termination of one execution and the commencement of the next. 
+
+If any execution of the task encounters an exception, subsequent executions are suppressed. 
+
+Otherwise, the task will only terminate via cancellation or termination of the executor.
+
+[ScheduledExecutorServiceDemo](ScheduledExecutorServiceDemo.java)
+
+
+### 刨根问底：核心线程池的内部实现 ###
