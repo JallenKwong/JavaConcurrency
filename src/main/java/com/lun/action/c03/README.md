@@ -435,5 +435,43 @@ execute()深层内含beforExecute()、afterExecute()，这方法将会被多线�
 
 ### 堆栈去哪里了：在线程池中寻找堆栈 ###
 
-[计算两个树的商](DivTask.java)
+[计算两个数的商](DivTask.java)
 
+除数为零时，程序应该抛出异常，却没有
+
+**解决之道**:
+
+上述例程应弃用submit()，改用execute()
+
+	es.execute(new DivTask(100, i));
+
+或改成
+
+	Future<?> ft = es.submit(new DivTask(100, i));
+	ft.get();
+
+异常信息就会打印出来。
+
+---
+
+有时异常信息却没有说明任务到底是在哪里提交的。
+
+**解决之道**：通过扩展ThreadPoolExecutor线程池，让它在调度任务之前，先保存一下提交线程的堆栈信息：
+
+[TraceThreadPoolExecutor](TraceThreadPoolExecutor.java)
+
+### 分而治之：Fork/Join框架 ###
+
+[曾经的笔记](https://github.com/JallenKwong/LearnJava8/tree/master/src/main/java/com/lun/c07#运行forkjoinsumcalculator)
+
+![](image/06.png)
+
+ForkJoinPool一个重要接口：
+
+	public <T> ForkJoinTask<T> submit(ForkJoinTask<T> task) {
+
+![](image/07.png)
+
+[CountTask](CountTask.java)
+
+## 不要重复发明轮子 ##
