@@ -386,7 +386,54 @@ Proceed in 3 steps:
 
 3. If we cannot queue task, then we try to add a new thread.  If it fails, we know we are shut down or saturated and so reject the task.
 
-
 ![](image/04.png)
 
 ### 超负载了怎么办：拒绝策略 ###
+
+JDK内置的拒绝策略
+
+这里用**策略模式**
+
+- AbortPolicy
+- CallerRunsPolicy
+- DiscardOldestPolicy
+- DiscardPolicy
+
+通过实现RejectedExecutionHandler接口，自定义拒绝策略。
+
+[RejectThreadPoolDemo——日志记录被拒绝的任务](RejectThreadPoolDemo.java)
+
+### 自定义线程创建：ThreadFactory ###
+
+线程池的线程从何而来？ThreadFactory
+
+[ThreadFactoryDemo——将提交线程池的线程通过ThreadFactory转换成守护线程](ThreadFactoryDemo.java)
+
+### 我的应用我做主：扩展线程池 ###
+
+使用场景：想监控每个任务执行的开始和结束时间，或者其他一些自定义的增强功能
+
+ThreadPoolExecutor是一个可以扩展的线程池。它提供了beforExecute()、afterExecute()、terminated()三个接口对线程池进行控制。
+
+execute()深层内含beforExecute()、afterExecute()，这方法将会被多线程访问
+
+这里用到**模板方法模式**
+
+[ExtThreadPool](ExtThreadPool.java)
+
+### 合理的选择：优化线程池线程数量 ###
+
+《Java Concurrency in Practice》给出一个估算线程池大小的经验公式：
+
+![](image/05.png)
+
+在Java中，可以通过：
+
+	Runtime.getRuntime().availableProcessors()
+
+取得可用的CPU数量
+
+### 堆栈去哪里了：在线程池中寻找堆栈 ###
+
+[计算两个树的商](DivTask.java)
+
