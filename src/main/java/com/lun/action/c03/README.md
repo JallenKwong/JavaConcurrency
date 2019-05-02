@@ -1,6 +1,66 @@
 # JDK并发包 #
 
+[1.多线程团队协作：同步控制](#多线程团队协作同步控制)
 
+[1.1.synchronized的功能扩展：重入锁](#synchronized的功能扩展重入锁)
+
+[1.1.1.中断响应](#中断响应)
+
+[1.1.2.锁申请等待限时](#锁申请等待限时)
+
+[1.1.3.公平锁](#公平锁)
+
+[1.1.4.重入锁小结](#重入锁小结)
+
+[1.2.重入锁的好搭档：Condition条件](#重入锁的好搭档condition条件)
+
+[1.3.允许多个线程同时访问：信号量（Semaphore）](#允许多个线程同时访问信号量semaphore)
+
+[1.4.ReadWriteLock读写锁](#readwritelock读写锁)
+
+[1.5.倒计时器：CountDownLatch](#倒计时器countdownlatch)
+
+[1.6.循环栅栏：CyclicBarrier](#循环栅栏cyclicbarrier)
+
+[1.7.线程阻塞工具类：LockSupport](#线程阻塞工具类locksupport)
+
+[2.线程复用：线程池](#线程复用线程池)
+
+[2.1.不要重复发明轮子：JDK对线程池的支持](#不要重复发明轮子jdk对线程池的支持)
+
+[2.1.1.固定大小的线程池](#固定大小的线程池)
+
+[2.1.2.计划任务](#计划任务)
+
+[2.2.刨根问底：核心线程池的内部实现](#刨根问底核心线程池的内部实现)
+
+[2.3.超负载了怎么办：拒绝策略](#超负载了怎么办拒绝策略)
+
+[2.4.自定义线程创建：ThreadFactory](#自定义线程创建threadfactory)
+
+[2.5.我的应用我做主：扩展线程池](#我的应用我做主扩展线程池)
+
+[2.6.合理的选择：优化线程池线程数量](#合理的选择优化线程池线程数量)
+
+[2.7.堆栈去哪里了：在线程池中寻找堆栈](#堆栈去哪里了在线程池中寻找堆栈)
+
+[2.8.分而治之：Fork/Join框架](#分而治之forkjoin框架)
+
+[3.不要重复发明轮子](#不要重复发明轮子)
+
+[3.1.并发集合简介](#并发集合简介)
+
+[3.2.线程安全的HashMap](#线程安全的hashmap)
+
+[3.3.有关List的线程安全](#有关list的线程安全)
+
+[3.4.高效读写的队列：深度剖析ConcurrentLinkedQueue](#高效读写的队列深度剖析concurrentlinkedqueue)
+
+[3.5.高效读取：不变模式下的CopyOnWriteArrayList](#高效读取不变模式下的copyonwritearraylist)
+
+[3.6.数据共享通道：BlockingQueue](#数据共享通道blockingqueue)
+
+[3.7.随机数据结构：跳表SkipList](#随机数据结构跳表skiplist)
 
 ## 多线程团队协作：同步控制 ##
 
@@ -475,3 +535,62 @@ ForkJoinPool一个重要接口：
 [CountTask](CountTask.java)
 
 ## 不要重复发明轮子 ##
+
+### 并发集合简介 ###
+
+- ConcurrentHashMap
+- CopyOnWriteArrayList
+- ConcurrentLinkedQueue
+- BlockingQueue
+- ConcurrentSkipListMap
+
+### 线程安全的HashMap ###
+
+	Map map = Collections.synchronizedMap(new HashMap<>());
+
+锁 包装
+
+
+### 有关List的线程安全 ###
+
+	List list = Collections.synchronizedList(new LinkedList<>());
+
+### 高效读写的队列：深度剖析ConcurrentLinkedQueue ###
+
+ConcurrentLinkedQueue是在高并发环境中性能最好的队列
+
+### 高效读取：不变模式下的CopyOnWriteArrayList ###
+
+对它来说，读取是完全不用加锁的，并且更好的消息是：写入也不会阻塞读取操作。只有写入和写入之间需要进行同步等待。这样一来，读操作的性能就会大幅度提升。
+
+### 数据共享通道：BlockingQueue ###
+
+生产者——消费者
+
+### 随机数据结构：跳表SkipList ###
+
+跳表的另一个特点是随机算法。跳表的本质是同时维护了多个链表，并且链表是分层的。
+
+![](image/08.png)
+
+最低层的链表维护了跳表内所有的元素，每上面一层链表都是下面一层的子集，一个元素插入哪些成是完全随机的。因此，如果你运气不好的话，可能会得到一个性能很糟糕的结构。但是在实际工作中，它的表现实非常好。
+
+![](image/09.png)
+
+跳表是一种使用空间换时间的算法。
+
+其中使用CAS操作。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
