@@ -127,3 +127,155 @@ JVM在JIT编译时，通过对运行上下文的扫描，去除不可能存在�
 逃逸分析必须在-server模式下进行，可以使用-XX:+DoEscapeAnalysis参数打开逃逸分析。使用-XX:+EliminateLocks参数可以打开锁消除。
 
 ## 人手一支笔：ThreadLocal ##
+
+### ThreadLocal的简单使用 ###
+
+[ParseDateDemo](ParseDateDemo.java)SimpleDateFormat.parse()线程不安全例程
+
+[ParseDateThreadLocalDemo](ParseDateThreadLocalDemo.java)SimpleDateFormat.parse()线程安全例程
+
+### ThreadLocal实现原理 ###
+
+    public void set(T value) {
+        Thread t = Thread.currentThread();
+        ThreadLocalMap map = getMap(t);//ThreadLocalMap是Thread的字域
+        if (map != null)
+            map.set(this, value);
+        else
+            createMap(t, value);
+    }
+
+    ThreadLocalMap getMap(Thread t) {
+        return t.threadLocals;
+    }
+
+    public void set(T value) {
+        Thread t = Thread.currentThread();
+        ThreadLocalMap map = getMap(t);
+        if (map != null)
+            map.set(this, value);
+        else
+            createMap(t, value);
+    }
+
+ThreadLocalMap是Thread的字域，这意味着只要线程不退出，对象的引用一直存在。
+
+Thread在退出时，会进行一些清理工作。
+
+	//Thread类的方法
+    private void exit() {
+        if (group != null) {
+            group.threadTerminated(this);
+            group = null;
+        }
+        /* Aggressively null out all reference fields: see bug 4006245 */
+        target = null;
+        /* Speed the release of some of these resources */
+        threadLocals = null;
+        inheritableThreadLocals = null;
+        inheritedAccessControlContext = null;
+        blocker = null;
+        uncaughtExceptionHandler = null;
+    }
+
+若使用线程池创建线程池，那就意味着当前线程未必退出。若将一些较大的对象设置到ThreadLocal中，可能会使系统出现内存泄露的可能。
+
+及时使用ThreadLocal.remove()方法将这个变量移除，回收内存，是不错的习惯
+
+
+若对于ThreadLocal的变量，手动将其设置为null，被GC容易发现，回收
+
+[ThreadLocalDemo_GC](ThreadLocalDemo_GC.java)
+
+>PS.JDK8运行上面例程，会运行不出书上想要的结果。
+
+Thread.ThreadLocalMap的实现使用了**弱引用**。JVM在GC时，若发现弱引用，就会立即回收。
+
+    static class Entry extends WeakReference<ThreadLocal<?>> {
+        /** The value associated with this ThreadLocal. */
+        Object value;
+
+        Entry(ThreadLocal<?> k, Object v) {
+            super(k);
+            value = v;
+        }
+    }
+
+![](image/01.png)
+
+### 对性能有何帮助 ###
+
+简单测试ThreadLocal性能
+
+[ThreadLocalDemo](ThreadLocalDemo.java)
+
+## 无锁 ##
+
+
+
+
+
+
+
+
+
+
+
+## 死锁 ##
+
+## 有关死锁问题 ##
+
+死锁就是两个或者多个线程，相互占用对方需要的资源，而都不进行释放，导致彼此之间都相互等待对方释放资源，产生了无限制等待的现象。
+
+死锁一旦发生，若没有外力介入，这种等待将会永远存在，从而对程序产生严重的存在，从而对程序产生严重的影响。
+
+[哲学家就餐](https://github.com/JallenKwong/ThinkingInJava/tree/master/src/main/java/com/lun/concurrency#deadlock)
+
+[DeadLock](DeadLock.java)
+
+运行DeadLock程序，检测**死锁**
+
+1.jps
+
+	Administrator@USER-20180302VA MINGW64 /c/eclipse-workspace/JavaConcurrency/src/main/java/com/lun/action/c04/image (master)
+	$ jps
+	4528
+	5704 DeadLock
+	6252 Jps
+
+2.jstack
+
+	Administrator@USER-20180302VA MINGW64 /c/eclipse-workspace/JavaConcurrency/src/main/java/com/lun/action/c04/image (master)
+	$ jstack 5704
+	2019-05-04 19:07:29
+	Full thread dump Java HotSpot(TM) 64-Bit Server VM (25.161-b12 mixed mode):
+
+	...
+
+	JNI global references: 6
+	
+	
+	Found one Java-level deadlock:
+	=============================
+	"哲学家B":
+	  waiting to lock monitor 0x000000000551f348 (object 0x00000000ec73f5a8, a java.lang.Object),
+	  which is held by "哲学家A"
+	"哲学家A":
+	  waiting to lock monitor 0x0000000006a9d8b8 (object 0x00000000ec73f5b8, a java.lang.Object),
+	  which is held by "哲学家B"
+	
+	Java stack information for the threads listed above:
+	===================================================
+	"哲学家B":
+	        at com.lun.action.c04.DeadLock.run(DeadLock.java:42)
+	        - waiting to lock <0x00000000ec73f5a8> (a java.lang.Object)
+	        - locked <0x00000000ec73f5b8> (a java.lang.Object)
+	"哲学家A":
+	        at com.lun.action.c04.DeadLock.run(DeadLock.java:29)
+	        - waiting to lock <0x00000000ec73f5b8> (a java.lang.Object)
+	        - locked <0x00000000ec73f5a8> (a java.lang.Object)
+	
+	Found 1 deadlock.
+
+	
+
